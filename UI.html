@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>
+		Real time chat
+	</title>
+	<link rel="icon" type="image/png" href="https://cdn2.iconfinder.com/data/icons/ios7-inspired-mac-icon-set/32/messages_32.png">
+	<style>
+		body
+		{
+			background: #efefef;
+		}
+		#header_text
+		{
+			top: 0px;
+			width:100%;
+			font-size: 1.4em;
+			color: #f2ae72;
+			clear:left;
+			text-align: center;
+			position:fixed;
+			margin-top:10px;
+			margin-bottom: 10px;
+		}
+		#chat
+		{
+			width:500px;
+			height:500px;
+			overflow:auto;
+			border:2px solid #85c4b9;
+			background:white;
+		}
+		.wrap
+		{
+			width:500px;
+			height:auto;
+			margin:0px auto;
+			margin-top:20px;
+		}
+		#message
+		{
+			width:502px;
+			height:28px;
+			font-size: 1.1em;
+			outline: 0;
+			border-top:0px;
+			border-right: 0px;
+			border-left:0px;
+			border-bottom-color: #efefef;
+			text-indent: 5px;
+		}
+
+		#message:focus
+		{
+			border-bottom-color: #c9c9c9;
+		}
+		.income
+		{
+			padding:10px;
+			margin-left:10px;
+			margin-right:10px;
+			word-wrap: break-word;
+			background-color: #efefef;
+			border:1px solid gray;
+			border-radius: 5px;
+			margin-top:10px;
+		}
+		.left_login
+		{
+			width:auto;
+			height:100px;
+			float:left;
+			margin-top:50px;
+			margin-left:20px;
+			word-wrap: break-word;
+		}
+		#hashtag
+		{
+			color:white;
+			background:#00a03e;
+			padding: 3px;
+			border-radius:3px;
+		}
+		footer
+		{
+			margin:0px auto;
+			text-align: center;
+		}
+		p#notification
+		{
+			margin-top:10px;
+		}
+
+	</style>
+	<style type="text/css" media="screen">
+		* {font-family: calibri;}
+
+		input {
+			box-shadow: 2px 2px 5px #808080;
+		}
+
+		h1 {font-size: 40px;color: #aaa;}
+
+		.login-button {
+			background: #008080;
+			height: 40px;
+			width: 265px;
+			color: #ffffff;
+			border: transparent;
+			border-radius: 4px;
+			font-size: 20px;
+		}
+
+		a{
+			text-decoration: none;
+			color: #008080;
+		}
+
+		.box1,.box2 {
+			width: 244px;
+			font-size: 25px;
+			border: 0.5px #ccc solid;
+			border-radius: 4px;
+			padding: 5px 10px;
+			font-family: consolas;
+		}
+
+		#online_user
+		{
+			font-weight:bold;
+			text-decoration: underline;
+			color: #00a03e;
+			cursor:pointer;
+		}
+		#username
+		{
+			color:#f76835;
+			text-decoration: underline;
+		}
+		.typing
+		{
+			width:100%;
+			height:20px;
+		}
+		.right_tag
+		{
+			float:right;
+			width:300px;
+			height:100px;
+			margin-top:20px;
+			margin-right:20px;
+		}
+		.hashtag
+		{
+			background: white;
+			width:300px;
+			height:250px;
+			overflow:auto;
+			border:2px solid #85c4b9;
+		}
+		p
+		{
+			margin-top:-10px;
+		}
+		#result
+		{
+			width:60%;
+			height:70%;
+			border-radius: 5px;
+		}
+	</style>
+
+</head>
+<body>
+	<!--New-->
+	
+  	<!--New-->
+  	<!--Left login-->
+  	<div class="left_login">
+		 <form id="nickForm">
+			<input type="textbox" name="first" class="box1" id="nickname" placeholder="Biệt danh của bạn"/> <br> <br>
+			<input type="submit" value="Chat" class="login-button" style="cursor:pointer">
+		</form>
+		<p id="notification">Vui lòng điền biệt danh của bạn</p>
+		<br>
+		<hr>
+		<p>Danh sách trực tuyến</p>
+		<p id="users">Không có ai online</p>
+  	</div>
+  	<!--Right hashtag-->
+  	<div class="right_tag">
+  		<p>#Hashtag</p>
+  		<div class="hashtag">
+
+  		</div>	
+	</div>
+  	<!--Main-->
+  	<header id="header_text">
+  		Ứng dụng chat theo thời gian thực
+  	</header>
+  	<br>
+	<div class="wrap">
+		<div id="chat">
+			
+		</div>
+		<div class="typing">
+			<span><em class="typing_name">bao đang gõ</em></span>
+		</div>
+		<br>
+		
+		<form id="send_message">
+			<p><input type="file" id="imagefile" accept="image/*"></p>
+			<input type="text" id="message"/>
+		</form>
+		
+		
+	</div>
+	<footer>
+		<br>
+		<p>Hosted by Heroku - Coding by Bao Bao - version 1.0</p>
+	</footer>
+	
+
+
+
+	<script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript">
+		
+		$(document).ready(function() {
+			var socket = io.connect();
+			var messForm = $('#send_message');
+			var mess = $('#message');
+			var show = $('#chat');
+			//nick name
+			var nickForm = $('#nickForm');
+			var nick = $('#nickname');
+			var nickError = $('#notification');
+			var user_list = $('#users');
+			var button = $('.login-button');
+			//hashtag area
+			var hashtag = $('.hashtag');
+
+			mess.prop('disabled', true);
+			$('#imagefile').prop('disabled',true);
+
+
+			messForm.submit(function(e)
+			{
+				e.preventDefault();
+				//gửi data lên server
+				socket.emit('send mess', mess.val().trim(), function(data)
+					{
+						show.append('<p class="income">' + data + '</p>');
+					});
+				mess.val('');
+			});
+
+			//client nhận data trả về từ server
+			socket.on('new mess', function(data){
+				if(data.msg.substr(0,1) == '#')
+				{
+					var ind = data.msg.indexOf(' ');
+					var hashtag = data.msg.substr(0, ind);
+					var message = data.msg.substr(ind + 1);
+					console.log(message);
+					show.append('<p class="income"><b id="username">' + data.nick + '</b> : <span id="hashtag">' + hashtag +'</span> ' + message + '</p>');
+					show.stop().animate({scrollTop: show[0].scrollHeight},'slow');
+					//10:23 sáng 24-07-2015
+					//lấy data từ server nếu có tin nhắn mới
+					$('title').html(data.nick + ' vừa chat');
+
+				}else{
+					show.append('<p class="income"><b id="username">' + data.nick + '</b> : ' + data.msg + '</p>');
+					show.stop().animate({scrollTop: show[0].scrollHeight},'slow');
+					//10:23 sáng 24-07-2015
+					//lấy data từ server nếu có tin nhắn mới
+					$('title').html(data.nick + ' vừa chat');
+				}
+				
+			});
+
+			//phần nick name
+			nickForm.submit(function(e) {
+				/* Act on the event */
+				e.preventDefault();
+				//send name to server
+				socket.emit('new user', nick.val(), function(data)
+				{
+					if(data)
+					{
+						
+						mess.prop('disabled', false);
+						nick.prop('disabled', true);
+						$('#imagefile').prop('disabled',false);
+						
+						button.hide();
+						nickError.text("Chào mừng bạn đến với hệ thống chat v1.0");
+						nickError.css('color', 'green');
+						mess.focus();
+						//set name for input
+						nick.hide();
+					}else{
+						nickError.text("Đã tồn tại biệt danh này");
+						nickError.css('color', 'red');
+						nick.focus();
+					}
+				});
+				nick.val('');
+			});
+
+			//show the user list
+			socket.on('usernames', function(data)
+			{
+				var html = '';
+				for(i=0; i<data.length; i++)
+				{
+					html += '<span id="online_user" >' + data[i] + '</span> đang online.<br/>';
+				}
+				user_list.html(html);
+			});
+
+			//nhận từ server
+			socket.on('hashtag',function(data){
+				hashtag.append('<p class="income"><b id="username">' + data.nick + '</b> : ' + data.msg + '</p>');
+			});
+			
+			//send image
+
+		 	$('#imagefile').bind('change', function(e){
+		      	var data = e.originalEvent.target.files[0];
+		      	var reader = new FileReader();
+		      	reader.onload = function(evt){
+			        
+			        socket.emit('user image', evt.target.result,function(data){
+			        	image(data, evt.target.result);
+			        });
+		      	};
+		      	reader.readAsDataURL(data);
+		      
+		    });
+
+		 	function image (from, base64Image) {
+			    // show.append($('<p>').append($('<b>').text(from), '<img src="' + base64Image + '"/>'));
+			    show.append('<div class="income"><p><b id="username">' + from + '</b> :</p> <img id="result" src="' + base64Image + '"/></div>');
+			    show.stop().animate({scrollTop: show[0].scrollHeight},'slow');
+			    $('title').html(from + ' vừa tải lên một ảnh');
+			  }
+		  	socket.on('user image', image);
+
+
+		  	//resize image
+		  	 
+		});
+	</script>
+
+	<script type="text/javascript">
+		
+	</script>
+</body>
+</html>
